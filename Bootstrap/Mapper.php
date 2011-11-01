@@ -83,7 +83,7 @@ class Bootstrap_Mapper
 	public function toRow($o)
 	{
 		require_once APPLICATION_PATH . '/../library/addendum/annotations.php';
-		require_once APPLICATION_PATH . '/../library/Nostradamus/Annotations.php';
+		require_once dirname(__FILE__) . "/Annotations.php";
 		
 		$clazzName = get_class($o);
 		$props = get_class_vars($clazzName);
