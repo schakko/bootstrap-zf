@@ -21,13 +21,17 @@ class Bootstrap_Mapper
 		$this->_dbTable = new $dbTableName;
 	}
 
+	protected function getDefaultTable()
+	{
+		return ($this->_dbTable->getViewName() != null) ? $this->_dbTable->getViewName() : $this->_dbTable->getTableName();
+	}
+
 	private function createDefaultStat()
 	{
-		($this->_dbTable->getViewName() != null) ? ($refTable = $this->_dbTable->getViewName()) : ($refTable = $this->_dbTable->getTableName());
 		
 		$stat = $this->_dbTable->getAdapter()
 		->select()
-		->from(array('t' => $refTable));
+		->from(array('t' => $this->getDefaultTable()));
 		return $stat;
 	}
 	
@@ -88,7 +92,13 @@ class Bootstrap_Mapper
 	
 	public function toRow($o)
 	{
-		require_once APPLICATION_PATH . '/../library/addendum/annotations.php';
+		if (!defined("ADDENDUM_PATH")) {
+			throw new Bootstrap_Service_Exception("Please define the constant ADDENDUM_PATH, for example 'addendum/annotations.php' in your bootstrap.php", 500);
+		}
+
+		require_once ADDENDUM_PATH;
+
+
 		require_once dirname(__FILE__) . "/Annotations.php";
 		
 		$clazzName = get_class($o);
@@ -111,7 +121,7 @@ class Bootstrap_Mapper
 		
 		$row = $this->toRow($object);
 		$id = 0;
-		
+
 		if (!isset($object->id) || $object->id == 0) {
 			$id = $this->_dbTable->insert($row);
 		} else {
@@ -125,7 +135,7 @@ class Bootstrap_Mapper
 
 	public function createStatementFindByColumn($column, $value)
 	{
-		$stmt = $this->_dbTable->query("SELECT * FROM " . $this->_dbTable->getTableName() . " WHERE $column = ?", array($value));
+		$stmt = $this->_dbTable->query("SELECT * FROM " . $this->getDefaultTable() . " WHERE $column = ?", array($value));
 		return $stmt;
 	}
 }
