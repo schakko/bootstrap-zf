@@ -45,5 +45,4 @@ class Bootstrap_Model_SessionUser implements Zend_Acl_Role_Interface
 	{
 		return ($this->_user !== null);
 	}
-
 }

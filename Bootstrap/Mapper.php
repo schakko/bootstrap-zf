@@ -31,6 +31,12 @@ class Bootstrap_Mapper
 		return $stat;
 	}
 	
+	public function delete($id)
+	{
+		$where = $this->_dbTable->getAdapter()->quoteInto('id = ?', $id);
+		return $this->_dbTable->delete($where);
+	}
+	
 	public function findAll()
 	{
 		$stat = $this->createDefaultStat();

@@ -1,4 +1,6 @@
 <?php
+require_once "Bootstrap/Model/SessionUser.php";
+
 class Bootstrap_View_Helper_IsAllowed extends Zend_View_Helper_Abstract
 {
 	/**
