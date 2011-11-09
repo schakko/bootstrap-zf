@@ -88,7 +88,11 @@ class Bootstrap_Mapper
 	
 	public function toRow($o)
 	{
-		require_once APPLICATION_PATH . '/../library/addendum/annotations.php';
+		if (!is_defined(ADDENDUM_PATH)) {
+			throw new Bootstrap_Service_Exception("Please define the constant ADDENDUM_PATH, for example 'addendum/annotations.php' in your bootstrap.php", 500);
+		}
+
+		require_once ADDENDUM_PATH;
 		require_once dirname(__FILE__) . "/Annotations.php";
 		
 		$clazzName = get_class($o);
