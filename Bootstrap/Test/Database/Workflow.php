@@ -18,11 +18,8 @@ class Bootstrap_Test_Database_Workflow implements Bootstrap_Test_Database_IWorkf
 	
 	public function execute()
 	{
-		$idx = 0;
-
 		foreach ($this->_stack as $workflow) {
 			$workflow->execute();
-
 		}
 	}
 

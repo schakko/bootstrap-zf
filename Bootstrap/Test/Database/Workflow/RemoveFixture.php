@@ -18,6 +18,7 @@ class Bootstrap_Test_Database_Workflow_RemoveFixture implements Bootstrap_Test_D
 		$stat = $this->_db->query("SHOW FULL TABLES");
 		$stat->setFetchMode(Zend_Db::FETCH_NUM);
 		$r = $stat->fetchAll();
+
 		foreach ($r as $row) {
 			if ($row[1] != 'BASE TABLE') {
 				continue;

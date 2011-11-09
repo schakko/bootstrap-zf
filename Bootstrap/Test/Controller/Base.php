@@ -3,14 +3,22 @@ abstract class Bootstrap_Test_Controller_Base extends Zend_Test_PHPUnit_Controll
 {
 	public function setUp()
 	{
-		$setUpFixture = Zend_Registry::get('setUpFixture');
-		$setUpFixture->execute();
+		try {
+			$setUpFixture = Zend_Registry::get('setUpFixture');
+			$setUpFixture->execute();
+		}
+		catch (Zend_Exception $e) {
+		}
 	}
 
 	public function tearDown()
 	{
-		$tearDownFixture = Zend_Registry::get('tearDownFixture');
-		$tearDownFixture->execute();
+		try {
+			$tearDownFixture = Zend_Registry::get('tearDownFixture');
+			$tearDownFixture->execute();
+		} 
+		catch (Zend_Exception $e) {
+		}
 	}
 
 	/**
