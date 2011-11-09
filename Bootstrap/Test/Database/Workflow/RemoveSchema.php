@@ -2,10 +2,15 @@
 class Bootstrap_Test_Database_Workflow_RemoveSchema implements Bootstrap_Test_Database_IWorkflow
 {
 	private $_db = null;
+	private $_name = "remove schema";
 	
-	public function __construct(Zend_Db_Adapter_Abstract $db)
+	public function __construct(Zend_Db_Adapter_Abstract $db, $name = null)
 	{
 		$this->_db = $db;
+
+		if ($name) {
+			$this->_name = $name;
+		}
 	}
 	
 	public function execute()
@@ -23,5 +28,10 @@ class Bootstrap_Test_Database_Workflow_RemoveSchema implements Bootstrap_Test_Da
 
 			$this->_db->query("DROP " . $type . " " . $row[0]);
 		}
+	}
+
+	public function __toString()
+	{
+		return $this->_name;
 	}
 }

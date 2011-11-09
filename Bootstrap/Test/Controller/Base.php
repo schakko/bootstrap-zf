@@ -1,6 +1,18 @@
 <?php
 abstract class Bootstrap_Test_Controller_Base extends Zend_Test_PHPUnit_ControllerTestCase
 {
+	public function setUp()
+	{
+		$setUpFixture = Zend_Registry::get('setUpFixture');
+		$setUpFixture->execute();
+	}
+
+	public function tearDown()
+	{
+		$tearDownFixture = Zend_Registry::get('tearDownFixture');
+		$tearDownFixture->execute();
+	}
+
 	/**
 	 * Dispatches the URL and toggles that exceptions will be thrown
 	 * @see Zend_Test_PHPUnit_ControllerTestCase::dispatch()
