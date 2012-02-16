@@ -27,7 +27,7 @@ class Bootstrap_Model_SessionUser implements Zend_Acl_Role_Interface
 	 * Set current logged in user
 	 * @param Application_Model_User $user
 	 */
-	public function setUser(Application_Model_User $user)
+	public function setUser(Application_Model_User $user = null)
 	{
 		$this->_user = $user;
 	}
