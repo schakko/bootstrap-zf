@@ -41,7 +41,11 @@ class Bootstrap_Test_Database_Workflow implements Bootstrap_Test_Database_IWorkf
 	public function execute(Bootstrap_Test_Database_Workflow $stack = NULL)
 	{
 		foreach ($this->_stack as $workflow) {
-			$workflow->execute($this);
+			try {
+				$workflow->execute($this);
+			} catch (Bootstrap_Test_Database_Workflow_Exception_Interrupt $e) {
+				break;
+			}
 		}
 	}
 
