@@ -3,6 +3,16 @@ abstract class Bootstrap_Test_Controller_Base extends Zend_Test_PHPUnit_Controll
 {
 	public function setUp()
 	{
+		parent::setUp();
+
+		try {
+			Zend_Registry::get('db')->rollBack();
+		}
+		catch (Exception $e) {
+		}
+
+		Zend_Registry::get('db')->beginTransaction();
+
 		try {
 			$setUpFixture = Zend_Registry::get('setUpFixture');
 			$setUpFixture->execute();
@@ -13,6 +23,8 @@ abstract class Bootstrap_Test_Controller_Base extends Zend_Test_PHPUnit_Controll
 
 	public function tearDown()
 	{
+		parent::tearDown();
+		
 		try {
 			$tearDownFixture = Zend_Registry::get('tearDownFixture');
 			$tearDownFixture->execute();
@@ -47,7 +59,11 @@ abstract class Bootstrap_Test_Controller_Base extends Zend_Test_PHPUnit_Controll
 		->throwExceptions(true)
 		->returnResponse(false);
 
-		$this->getFrontController()->dispatch();
+		if ($this->bootstrap instanceof Zend_Application) {
+			$this->bootstrap->run();
+		} else {
+			$this->getFrontController()->dispatch();
+		}
 	}
 
 	/**
@@ -78,6 +94,11 @@ abstract class Bootstrap_Test_Controller_Base extends Zend_Test_PHPUnit_Controll
 				throw $e;
 			}
 		}
+	}
+
+	public function setJsonRequest($data, $method = 'POST') {
+		$this->getRequest()->setMethod($method)->setRawBody(Zend_Json::encode($data));
+		$this->getRequest()->setHeader('Content-Type', 'application/json');
 	}
 
 	/**

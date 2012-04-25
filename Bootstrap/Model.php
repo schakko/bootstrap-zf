@@ -18,7 +18,7 @@ class Bootstrap_Model
 		}
 		
 		if (!property_exists($this, $key)) {
-			throw new Exception("You tried to access property '$key' of class " . get_class($this) . " but this property does not exists");
+			throw new Exception("You tried to access property '$key' of class " . get_class($this) . " but this property does not exists.");
 		}
 
 		return $this->{$key};

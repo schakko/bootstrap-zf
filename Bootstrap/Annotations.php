@@ -1,19 +1,39 @@
 <?php 
-class MapToColumn extends Annotation
+interface AnnotationHandler {
+	public function handle($result, $propertyName, $value);
+}
+
+class Column extends Annotation implements AnnotationHandler
 {
-	public $column = null;
+	public $name = null;
 	public $dbExpression = null;
+	public $executeExpression = 'always';
 	
 	public function handle($result, $propertyName, $value) {
-		if ($this->column != null) {
-			$propertyName = $this->column;
+		if ($this->name != null) {
+			$propertyName = $this->name;
 		}
 		
-		($this->dbExpression != null) ? ($val = new Zend_Db_Expr($this->dbExpression)) : ($val = $value);
+		$val = $value;
+
+		if (null != $this->dbExpression) {
+			$expr = strtolower($this->executeExpression);
+
+			if ($expr == 'always' || ($expr == 'isnull' && !$value)) {
+				$val = new Zend_Db_Expr($this->dbExpression);
+			}
+		}
+
 		$result[$propertyName] = $val;
 		
 		return $result;
 	}
+}
+
+class Map extends Annotation
+{
+	public $name = null;
+	public $category = null;
 }
 
 class ModelAnnotationResultFactory
@@ -22,7 +42,9 @@ class ModelAnnotationResultFactory
 	{
 		foreach ($property->getAnnotations() as $annotation)
 		{
-			$result = $annotation->handle($result, $property->getName(), $property->getValue($instance));
+			if ($annotation instanceof AnnotationHandler) {
+				$result = $annotation->handle($result, $property->getName(), $property->getValue($instance));
+			}
 		}
 		
 		return $result;

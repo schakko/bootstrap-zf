@@ -7,11 +7,19 @@ class Bootstrap_Model_SessionUser implements Zend_Acl_Role_Interface
 
 	public function getRoleId()
 	{
+		if ($this->_user instanceof Zend_Acl_Role_Interface) {
+			return $this->_user->getRoleId();
+		}
+
 		return $this->_role;
 	}
 
 	public function setRoleId($role)
 	{
+		if ($this->_user instanceof Zend_Acl_Role_Interface) {
+			$this->_user->setRoleId($role);
+		}
+
 		$this->_role = $role;
 	}
 

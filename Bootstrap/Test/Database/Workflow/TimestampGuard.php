@@ -36,12 +36,13 @@ class Bootstrap_Test_Database_Workflow_TimestampGuard implements Bootstrap_Test_
 
 		if (file_exists($this->_filename)) {
 			$lastExecution = file_get_contents($this->_filename);
+		} else {
+			$lastExecution = 0;
 		}
-		
+
 		if ($now < ($timeout = ($lastExecution + $this->_noExecutionAfter))) {
 			throw new Bootstrap_Test_Database_Workflow_Exception_Interrupt("Workflow is locked till " . strftime("%T", $timeout)); 
 		}
-		
 		file_put_contents($this->_filename, $now);
 	}
 

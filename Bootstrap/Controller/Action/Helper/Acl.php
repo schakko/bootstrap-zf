@@ -1,36 +1,35 @@
 <?php
 class Bootstrap_Controller_Action_Helper_Acl extends Zend_Controller_Action_Helper_Abstract
 {
+	const LAST_ACL_EXCEPTION_KEY = "lastAclException";
+
 	/**
-	 * @var Zend_Acl
+	 * @var Bootstrap_Acl_Exceptionable
 	 */
-	private $_acl;
+	private $_exceptionableAcl;
 
-	public function __construct(Zend_Acl $acl)
+	public function __construct(Bootstrap_Acl_Exceptionable $exceptionableAcl)
 	{
-		$this->_acl = $acl;
+		$this->_exceptionableAcl = $exceptionableAcl;
 	}
 
-	public function authorizeUser($resource, $privilege, $throwExceptionWithMessage)
+	public function authorizeUser($resource, $privilege, $throwExceptionWithMessage = null)
 	{
-		$isAllowed = $this->isAllowed($resource, $privilege);
-		
-		if (!$isAllowed) {
-			if (!$throwExceptionWithMessage) {
-				$throwExceptionWithMessage = "You are not allowed to do this action.";
-			}
-			
-			throw new Bootstrap_Service_Exception_Authorization($throwExceptionWithMessage);
+		$registry = Zend_Registry::getInstance();
+
+		if (isset($registry[self::LAST_ACL_EXCEPTION_KEY])) {
+			unset($registry[self::LAST_ACL_EXCEPTION_KEY]);
 		}
-		
-		return true;
-	}
 
-	public function isAllowed($resource, $privilege)
-	{
-		$role = $this->getActionController()->getSessionUser();
-		$isAllowed = $this->_acl->isAllowed($role, $resource, $privilege);
+		try {
+			$isAllowed = $this->_exceptionableAcl->tryAuthorization($resource, $privilege);
+			
+			return true;
+		}
+		catch (Exception $e) {
+			Zend_Registry::set(self::LAST_ACL_EXCEPTION_KEY, $e);
+		}
 
-		return $isAllowed;
+		return false;
 	}
 }

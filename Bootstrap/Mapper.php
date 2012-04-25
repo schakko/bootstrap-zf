@@ -3,6 +3,7 @@ class Bootstrap_Mapper
 {
 	protected $_modelName;
 	protected $_dbTable;
+	protected $_modelViewStack = array();
 
 	public function __construct($modelName = null)
 	{
@@ -18,12 +19,47 @@ class Bootstrap_Mapper
 		
 		$this->_modelName = "Application_Model_" . $modelName;
 		$dbTableName = "Application_Model_DbTable_" . $modelName;
+
 		$this->_dbTable = new $dbTableName;
+	}
+
+	public function setModelName($modelName)
+	{
+		$this->_modelName = $modelName;
+	}
+
+	public function getModelName()
+	{
+		return $this->_modelName;
+	}
+
+	public function getDbTable()
+	{
+		return $this->_dbTable;
 	}
 
 	protected function getDefaultTable()
 	{
 		return ($this->_dbTable->getViewName() != null) ? $this->_dbTable->getViewName() : $this->_dbTable->getTableName();
+	}
+
+	public function commitModelView($modelName, $viewName) 
+	{
+		$this->_modelViewStack[] = array('model' => $this->getModelName(), 'view' => $this->_dbTable->getViewName());
+
+		$this->setModelName($modelName);
+		$this->_dbTable->setViewName($viewName);
+	}
+
+	public function rollbackModelView()
+	{
+		if (sizeof($this->_modelViewStack) == 0) {
+			return;
+		}
+
+		$last = array_pop($this->_modelViewStack);
+		$this->setModelName($last['model']);
+		$this->_dbTable->setViewName($last['view']);
 	}
 
 	private function createDefaultStat()
@@ -53,7 +89,7 @@ class Bootstrap_Mapper
 		$stat = $this->createDefaultStat();
 		$stat->where('id = ?', array($id));
 		$r = $stat->query()->fetch();
-		
+
 		return $this->toObject($r);
 		
 	}
