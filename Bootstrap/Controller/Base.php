@@ -32,9 +32,9 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		if ($this->_user->isLoggedIn() && ($this->getRequest()->getParam('username') == $this->_user->getUser()->username)) {
 			$this->view->isOnOwnSite = true;
 		}
-		
+
 	}
-	
+
 	public function getSessionUser()
 	{
 		return $this->_user;
@@ -64,21 +64,52 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		}
 	}
 
+	/**
+	 * Liefert zurück, ob der angefragte Content-Type oder Accept-Header "json" erwartet
+	 * @return boolean
+	 */
 	protected function isJsonRequest()
 	{
 		$r = ((stripos($this->getRequest()->getHeader('Content-Type'), "json") !== FALSE)
-		|| (stripos($this->getRequest()->getHeader('Accept'), "json") !== FALSE)
+				|| (stripos($this->getRequest()->getHeader('Accept'), "json") !== FALSE)
 		);
 
 		return $r;
 	}
 
+	/**
+	 * Liefert die Formulardaten aus dem Request zurück
+	 * @return array
+	 */
 	protected function getFormData() {
 		if ($this->isJsonRequest()) {
 			return $this->getJsonDataFromRequest();
 		}
-		
+
 		return $_POST;
+	}
+
+	/**
+	 * Validiert das Formular. Sind dabei irgendwelche Fehler aufgetreten, werden diese gemergt und es wird null zurückgeliefert.
+	 *
+	 * @param Zend_Form $form
+	 * @param Zend_View $view Wird keine View angegeben, werden die Fehler in $this->view gemergt
+	 * @return array Formulardaten
+	 */
+	protected function validateForm(Zend_Form $form, Zend_View $view = null) {
+		$data = $this->getFormData();
+		$form->isValid($data);
+
+		if (null == $view) {
+			$view = $this->view;
+		}
+
+		if (sizeof($form->getMessages()) > 0) {
+			$this->merge_array_to_object($form->getErrorsAsArray(), $view);
+			return;
+		}
+
+		return $data;
 	}
 
 	protected function getJsonDataFromRequest() {
@@ -123,11 +154,17 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 			$this->$function();
 		}
 		else {
-			// TODO: HTTP Code 
+			// TODO: HTTP Code
 			throw new Zend_Http_Exception("This resource does not allow method " . $method . ". Only one of them is allowed: " . implode(array_keys($map), ", "), 405);
 		}
 	}
 
+	/**
+	 * Kopiert jedes Element aus $arr nach $obj->$key
+	 * @param array $arr
+	 * @param object $obj
+	 * @return object
+	 */
 	protected function merge_array_to_object($arr, $obj) {
 		if (!is_array($arr) || !is_object($obj)) {
 			return;
@@ -136,5 +173,7 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		while(list($k, $v) = each($arr)) {
 			$obj->$k = $v;
 		}
+
+		return $obj;
 	}
 }
