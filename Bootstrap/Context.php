@@ -27,6 +27,10 @@ class Bootstrap_Context
 		return self::getInstance()->set($name, $instance, $closure);
 	}
 
+	/**
+	 * Resolves an existing instance of given object.
+	 * You can
+	 */
 	public static function resolve($name, $aPrototype = false) 
 	{
 		return self::getInstance()->get($name, $aPrototype);
@@ -59,26 +63,31 @@ class Bootstrap_Context
 	}
 
 
-	public function get($name, $aPrototype = false) 
+	/**
+	 * Returns an existing or new instance of given class name
+	 * @param string $clazzName
+	 * @param boolean $aPrototype
+	 */
+	public function get($clazzName, $aPrototype = false) 
 	{
-		if (!isset($this->_registry[$name])) {
-			return $this->set($name, null, null, array('createInstance' => true));
+		if (!isset($this->_registry[$clazzName])) {
+			return $this->set($clazzName, null, null, array('createInstance' => true));
 		}
 
-		if ((!$this->_registry[$name]['instance']) || ($aPrototype)) {
+		if ((!$this->_registry[$clazzName]['instance']) || ($aPrototype)) {
 			$options = array();
 
-			if (isset($this->_registry[$name]['factory'])) {
-				$options['factory'] = $this->_registry[$name]['factory'];
+			if (isset($this->_registry[$clazzName]['factory'])) {
+				$options['factory'] = $this->_registry[$clazzName]['factory'];
 			}
 
-			$instance = $this->createInstance($name, $options);
+			$instance = $this->createInstance($clazzName, $options);
 
 			if (!$aPrototype) {
-				$this->_registry[$name]['instance'] = $instance;
+				$this->_registry[$clazzName]['instance'] = $instance;
 			}
 		} else {
-			$instance = $this->_registry[$name]['instance'];
+			$instance = $this->_registry[$clazzName]['instance'];
 		}
 
 		return $instance;
