@@ -13,6 +13,11 @@ require_once "Zend/Acl/Assert/Interface.php";
 
 abstract class Bootstrap_Acl_ReasonableAssertion implements Zend_Acl_Assert_Interface
 {
+	/**
+	 * Erzeugt einen neuen Fehlerstatus in der Registry
+	 * @param string $codeOrException
+	 * @param string $message Default ist null
+	 */
 	public function assertionFailed($codeOrException, $message = null)
 	{
 		if ($codeOrException instanceof Exception) {
