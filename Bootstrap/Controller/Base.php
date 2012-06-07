@@ -18,8 +18,9 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		// Lokale Variablen dem Controller und der Session zuweisen
 		$this->_user = $this->_session['user'];
 
-		if ($this->getRequest()->isXmlHttpRequest() || ($this->getRequest()->getParam('format') == 'json')) {
+		if ($this->isJsonRequest() || ($this->getRequest()->getParam('format') == 'json')) {
 			$this->_helper->layout->disableLayout();
+			$this->getRequest()->setParam('format', 'json');
 			return;
 		}
 
@@ -27,12 +28,6 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		$this->view->acl = Zend_Registry::get('Zend_Acl');
 
 		Zend_View_Helper_Navigation_HelperAbstract::setDefaultRole($this->_user->getRoleId());
-		$this->view->isOnOwnSite = false;
-
-		if ($this->_user->isLoggedIn() && ($this->getRequest()->getParam('username') == $this->_user->getUser()->username)) {
-			$this->view->isOnOwnSite = true;
-		}
-
 	}
 
 	public function getSessionUser()
@@ -46,8 +41,12 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 	public function requireUser()
 	{
 		if (!$user = $this->_user->getUser()) {
-			// TODO Redirect auf Login-Seite oder ähnliches
-			throw new Exception("You must be logged in to use this feature", 401);
+			// Wenn JSON-Request, Fehlermeldung werfen
+			if ($this->isJsonRequest()) {
+				throw new Bootstrap_Service_Exception_Authorization("You must be logged in to use this feature", 401);
+			}
+
+			$this->redirectToLogin();
 		}
 
 		return $user;
@@ -70,7 +69,9 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 	 */
 	protected function isJsonRequest()
 	{
-		$r = ((stripos($this->getRequest()->getHeader('Content-Type'), "json") !== FALSE)
+		$r = (($this->_getParam('format') === 'json') 
+				|| (stripos($this->getRequest()->getHeader('X-Requested-With'), "XMLHttpRequest") !== FALSE)
+				|| (stripos($this->getRequest()->getHeader('Content-Type'), "json") !== FALSE)
 				|| (stripos($this->getRequest()->getHeader('Accept'), "json") !== FALSE)
 		);
 
@@ -94,10 +95,20 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 	 *
 	 * @param Zend_Form $form
 	 * @param Zend_View $view Wird keine View angegeben, werden die Fehler in $this->view gemergt
+	 * @param integer Status-Code
+	 * @param array Formulardaten
+	 *
 	 * @return array Formulardaten
 	 */
-	protected function validateForm(Zend_Form $form, Zend_View $view = null) {
-		$data = $this->getFormData();
+	protected function validateForm(Zend_Form $form, Zend_View $view = null, $httpStatusCode = 400, $data = null) {
+		if (($data === null) || !is_array($data)) {
+			$data = $this->getFormData();
+		}
+
+		if (!is_array($data)) {
+			$data = array();
+		}
+		
 		$form->isValid($data);
 
 		if (null == $view) {
@@ -106,10 +117,13 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 
 		if (sizeof($form->getMessages()) > 0) {
 			$this->merge_array_to_object($form->getErrorsAsArray(), $view);
+			$this->getResponse()
+			->setHttpResponseCode($httpStatusCode);
 			return;
 		}
 
-		return $data;
+		$r = $form->getValues();
+		return $r;
 	}
 
 	protected function getJsonDataFromRequest() {
@@ -118,12 +132,23 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		}
 
 		try {
-			return Zend_Json::decode($this->getRequest()->getRawBody());
+			if (stripos($this->getRequest()->getHeader('Content-Type'), 'application/x-www-form-urlencoded') !== FALSE) {
+				if ($this->getRequest()->isPost()) {
+					return $this->getRequest()->getPost();
+				}
+
+				$params = array();
+				parse_str($this->getRequest()->getRawBody(), $params);
+				return $params;
+			}
+			$decode = Zend_Json::decode($this->getRequest()->getRawBody());
+			return $decode;
 		}
 		catch (Exception $e) {
 			throw new Zend_Http_Exception("Your given JSON content was not valid.", 406);
 		}
 	}
+
 
 	protected function sendJsonFormError(Zend_Form $form, $httpStatusCode = 400)
 	{
@@ -133,8 +158,10 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 
 	protected function sendJsonResponse($unserializedObject, $httpStatusCode = 200)
 	{
+		$this->_helper->contextSwitch()->setAutoJsonSerialization(false);
 		$this->_helper->layout->disableLayout();
 		$this->_helper->viewRenderer->setNoRender(true);
+		$this->getResponse()->clearBody();
 		$this->getResponse()
 		->setHttpResponseCode($httpStatusCode)
 		->setHeader('Content-Type', 'application/json')
@@ -175,5 +202,48 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 		}
 
 		return $obj;
+	}
+
+	/**
+	 * Veröffentlicht die Form, wenn kein JSON-Request vorliegt
+	 * @param Zend_Form $form
+	 */
+	public function publishForm(Zend_Form $form)
+	{
+		if (!$this->isJsonRequest()) {
+			$this->view->form = $form;
+		}
+	}
+
+	/**
+	 * Leitet weiter zur Login-Seite.
+	 * Im Session-Namespace 'origin' wird in der Variablen 'url' die ggw. Seite gespeichert
+	 */
+	public function redirectToLogin() {
+		$namespace = new Zend_Session_Namespace('origin');
+		$namespace->url = $this->getRequest()->getRequestUri();
+		$this->_redirect('/login');
+	}
+
+	/**
+	 * Überprüft, dass mindestens einer der Parameter gesetzt ist, ansonsten wird eine Bootstrap_Service_Exception_InvalidArgument geworfen
+	 * @param array $paramsNeeded
+	 * @param string $paramNameDefault
+	 * @param string $paramValueDefault
+	 */
+	public function requireParam($paramsNeeded = array(), $paramNameDefault = '', $paramValueDefault = '')
+	{
+		foreach ($paramsNeeded as $param) {
+			if ($this->_getParam($param)) {
+				return true;
+			}
+		}
+
+		if ($paramNameDefault && !$this->_getParam($paramNameDefault)) {
+			$this->_setParam($paramNameDefault, $paramValueDefault);
+			return true;
+		}
+
+		throw new Bootstrap_Service_Exception_InvalidArgument("You must provide at least one parameter of: " . implode(", ", $paramsNeeded));
 	}
 }

@@ -16,6 +16,11 @@ class Bootstrap_Acl_Exceptionable
 	 */
 	private $_acl;
 
+	/**
+	 * @var Zend_Acl_Resource
+	 */
+	private $_defaultUser;
+
 	const LAST_EXCEPTION_KEY = 'Bootstrap_Acl_ReasonableAssertion_Last_Exception';
 
 	public function __construct(Zend_Acl $acl)
@@ -31,6 +36,10 @@ class Bootstrap_Acl_Exceptionable
 			unset($registry[self::LAST_EXCEPTION_KEY]);
 		}
 
+		if (!$user) {
+			$user = $this->_defaultUser;
+		}
+		
 		$r = $this->_acl->isAllowed($user, $resource, $privilege);
 
 		if (!$r) {
@@ -44,6 +53,16 @@ class Bootstrap_Acl_Exceptionable
 		}
 
 		return true;
+	}
+
+	/**
+	 * Set default user instance
+	 *
+	 * @param Zend_Acl_Role_Interface $defaultUser
+	 */
+	public function setDefaultUser(Zend_Acl_Role_Interface $defaultUser)
+	{
+		$this->_defaultUser = $defaultUser;
 	}
 }
 

@@ -35,7 +35,7 @@ class Bootstrap_Model_Converter_MapToObject extends Bootstrap_Model_Converter_Ab
 						}
 					}
 					$useName = $key;
-
+						
 					if ($annotation->name) {
 						$useName = $annotation->name;
 					}
@@ -43,7 +43,7 @@ class Bootstrap_Model_Converter_MapToObject extends Bootstrap_Model_Converter_Ab
 					if (isset($this->_nameMapping[$key])) {
 						$useName = $this->_nameMapping[$key];
 					}
-					
+						
 					if (isset($useArray[$useName])) {
 						$object->$key = $useArray[$useName];
 					}
