@@ -41,7 +41,7 @@ class Bootstrap_Test_Database_Workflow_TimestampGuard implements Bootstrap_Test_
 		}
 
 		if ($now < ($timeout = ($lastExecution + $this->_noExecutionAfter))) {
-			throw new Bootstrap_Test_Database_Workflow_Exception_Interrupt("Workflow is locked till " . strftime("%T", $timeout)); 
+			throw new Bootstrap_Test_Database_Workflow_Exception_Interrupt("Workflow is locked till " . strftime("%H:%M:%S", $timeout)); 
 		}
 		file_put_contents($this->_filename, $now);
 	}
