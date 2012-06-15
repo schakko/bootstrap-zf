@@ -203,6 +203,24 @@ class Bootstrap_Controller_Base extends Zend_Controller_Action
 
 		return $obj;
 	}
+	
+	/**
+	 * Kopiert jede Eigenschaft aus $source nach $target->$key
+	 * @param object $source
+	 * @param object $target
+	 * @return object
+	 */
+	protected function merge_objects($source, $target) {
+		if (!is_object($source) || !is_object($target)) {
+			return;
+		}
+		
+		foreach ($source as $k => $v) {
+			$target->$k = $v;
+		}
+		
+		return $target;
+	}
 
 	/**
 	 * Veröffentlicht die Form, wenn kein JSON-Request vorliegt
